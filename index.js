@@ -32,6 +32,7 @@ async function sendWelcomeMessage(member) {
 		let welcomeChannel = discordClient.guilds.get(config.get('discord.guild')).channels.get(config.get('discord.welcomeChannel'));
 
 		await welcomeChannel.sendMessage(`Hello <@${member.id}>! You need to link your Facepunch account to use this server. To do so you need to edit your Facepunch profile (https://facepunch.com/profile.php?do=editprofile) and set your **Flickr username** to **${token}**
+Make sure your profile is public otherwise this won't work.
 Once thats done we'll need your Facepunch ID, to get it go to your profile, and grab the number after *member.php?u=*
 Once you have your Facepunch ID type it in this channel like so: **!fpauth *<Facepunch ID>***`);
 
@@ -42,6 +43,13 @@ Once you have your Facepunch ID type it in this channel like so: **!fpauth *<Fac
 let discordClient = new Discord.Client();
 
 discordClient.on('ready', async () => {
+	discordClient.user.setPresence(new Discord.Presence({
+		status: 'online',
+		game: new Discord.Game({
+			name: 'with postal\'s ass'
+		})
+	}));
+
 	let guild = discordClient.guilds.get(config.get('discord.guild'));
 	guild = await guild.fetchMembers();
 
@@ -116,11 +124,13 @@ discordClient.on('message', async (message) => {
 			return await welcomeChannel.sendMessage('Sorry, something went wrong...');
 		}
 
+		logger.debug(profileData);
+
 		if (!user.facepunchId) {
 			let token = user.token;
 
 			if (!profileData.token)
-				return await welcomeChannel.sendMessage(`<@${member.id}> It seems you have not set your token. You should set your **Flickr username** to **${token}**`);
+				return await welcomeChannel.sendMessage(`<@${member.id}> It seems you have not set your token. Make sure your profile is public and that your **Flickr username** is set to **${token}**`);
 
 			user = await User.findOne({discordId: member.id, token: profileData.token});
 
@@ -137,11 +147,15 @@ discordClient.on('message', async (message) => {
 		await user.save();
 
 		//GIVE ROLES
-		await member.addRole(config.get('roles.member'));
+		let roles = [config.get('roles.member')];
 
-		if (profileData.isGoldMember) {
-			await member.addRole(config.get('roles.goldMember'));
-		}
+		if (profileData.isGoldMember)
+			roles.push(config.get('roles.goldMember'));
+
+		if (profileData.isModerator)
+			roles.push(config.get('roles.moderator'));
+
+		await member.addRoles(roles);
 
 		if (config.get('updateNickname')) {
 			try {

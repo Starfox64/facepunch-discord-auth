@@ -4,17 +4,17 @@ mongo:
     - /var/opt/fpauth_db:/data/db
 node:
   build: .
-  labels:
-    io.rancher.container.pull_image: always
   links:
     - mongo:mongo
   environment:
+    - FPAUTH_LOG_LEVEL=info
     - FPAUTH_DISCORD_TOKEN=
     - FPAUTH_GUILD=
     - FPAUTH_WELCOME_CHANNEL=
     - FPAUTH_MOD_CHANNEL=
     - FPAUTH_MEMBER_ROLE=
     - FPAUTH_GOLDMEMBER_ROLE=
+    - FPAUTH_MODERATOR_ROLE=
     - FPAUTH_UPDATE_NICK=false
     - FPAUTH_FETCH_COOLDOWN=600
     - FPAUTH_MIN_POSTS=25
