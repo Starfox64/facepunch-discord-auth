@@ -27,6 +27,9 @@ async function sendWelcomeMessage(member) {
 			});
 		} else {
 			token = user.token;
+
+			user.joinedAt = Date.now();
+			await user.save();
 		}
 
 		let welcomeChannel = discordClient.guilds.get(config.get('discord.guild')).channels.get(config.get('discord.welcomeChannel'));
@@ -37,6 +40,58 @@ Once thats done we'll need your Facepunch ID, to get it go to your profile, and 
 Once you have your Facepunch ID type it in this channel like so: **!fpauth *<Facepunch ID>***`);
 
 		logger.info(`A welcome message was sent to ${member.user.username} @${member.id}.`);
+	}
+}
+
+async function updateUserData(member, user, profileData) {
+	user.facepunchId = profileData.facepunchId;
+	user.fetchedAt = Date.now();
+	await user.save();
+
+	let roles = [config.get('roles.member')];
+
+	if (profileData.isGoldMember)
+		roles.push(config.get('roles.goldMember'));
+
+	if (profileData.isModerator)
+		roles.push(config.get('roles.moderator'));
+
+	await member.addRoles(roles);
+
+	if (config.get('updateNickname')) {
+		try {
+			await member.setNickname(profileData.username);
+		} catch (e) {
+			if (e.status == 403) {
+				logger.warn(`Could not update ${member.user.username} @${member.id}'s nickname, permission denied.`);
+			} else {
+				logger.error(e);
+			}
+		}
+	}
+}
+
+async function cleanupLoop() {
+	let welcomeChannel = discordClient.guilds.get(config.get('discord.guild')).channels.get(config.get('discord.welcomeChannel'));
+	for (let member of welcomeChannel.members.values()) {
+		let user = await User.findOne({discordId: member.id});
+		if (!user || user.facepunchId) continue;
+
+		if (user.shouldBeKicked()) await member.kick();
+	}
+
+	let messages = await welcomeChannel.fetchMessages({limit: 500});
+
+	for (let message of messages.values()) {
+		let member = message.member;
+		let ts = message.createdAt.getTime() / 1000;
+		if (member && ((member.roles.size > 1 && !member.user.bot) || (new Date().getTime() / 1000) < ts + config.get('cleanupInterval'))) messages.delete(message.id);
+	}
+
+	if (messages.size > 2) return await welcomeChannel.bulkDelete(messages);
+
+	for (let message of messages.values()) {
+		await message.delete();
 	}
 }
 
@@ -62,15 +117,24 @@ discordClient.on('ready', async () => {
 
 discordClient.on('guildMemberAdd', async (member) => {
 	if (member.user.bot) return;
-	let user = await User.findOne({discordId: member.id});
-
-	if (user && user.facepunchId) return;
-
-	await sendWelcomeMessage(member);
 
 	let logMessage = `${member.user.username} @${member.id} joined the server.`;
 	logger.info(logMessage);
 	await Event.create({type: 'join', discordId: member.id, description: logMessage});
+
+	let user = await User.findOne({discordId: member.id});
+
+	if (user && user.facepunchId) {
+		try {
+			var profileData = await fetchProfile(user.facepunchId);
+		} catch (e) {
+			return logger.error(e);
+		}
+
+		return await updateUserData(member, user, profileData);
+	}
+
+	await sendWelcomeMessage(member);
 });
 
 discordClient.on('guildMemberRemove', async (member) => {
@@ -104,8 +168,7 @@ discordClient.on('message', async (message) => {
 		let welcomeChannel = discordClient.guilds.get(config.get('discord.guild')).channels.get(config.get('discord.welcomeChannel'));
 
 		if (user.facepunchId) {
-			let ts = user.fetchedAt.getTime() / 1000;
-			if ((new Date().getTime() / 1000) < ts + config.get('fetchCooldown'))
+			if (user.canFetchProfile())
 				return await welcomeChannel.sendMessage(`<@${member.id}> You have already authenticated your profile recently, please wait before doing it again.`);
 
 			facepunchId = user.facepunchId;
@@ -142,32 +205,7 @@ discordClient.on('message', async (message) => {
 				return await welcomeChannel.sendMessage(`<@${member.id}> Sorry, you need to have at least ${minPostCount} posts to join this server. Come back when you meet this requirement.`);
 		}
 
-		user.facepunchId = facepunchId;
-		user.fetchedAt = Date.now();
-		await user.save();
-
-		//GIVE ROLES
-		let roles = [config.get('roles.member')];
-
-		if (profileData.isGoldMember)
-			roles.push(config.get('roles.goldMember'));
-
-		if (profileData.isModerator)
-			roles.push(config.get('roles.moderator'));
-
-		await member.addRoles(roles);
-
-		if (config.get('updateNickname')) {
-			try {
-				await member.setNickname(profileData.username);
-			} catch (e) {
-				if (e.status == 403) {
-					logger.warn(`Could not update ${member.user.username} @${member.id}'s nickname, permission denied.`);
-				} else {
-					logger.error(e);
-				}
-			}
-		}
+		await updateUserData(member, user, profileData);
 
 		let logMessage = `${member.user.username} @${member.id} linked his FP Account ID: ${facepunchId} USERNAME: ${profileData.username} GOLDMEMBER: ${profileData.isGoldMember}.`;
 		logger.info(logMessage);
@@ -193,12 +231,17 @@ discordClient.on('message', async (message) => {
 
 discordClient.login(config.get('discord.token'));
 
+setInterval(cleanupLoop, config.get('cleanupInterval') * 1000);
+
 // Treats unhandled errors in async code as regular errors.
 process.on('unhandledRejection', (err) => {
+	logger.debug('The following error was thrown from an unhandledRejection event.');
 	logger.error(err);
 	process.exit(1);
 });
 
-process.on('SIGTERM', () => {
-	discordClient.destroy();
+process.on('SIGTERM', async () => {
+	logger.debug('Destroying discord client...');
+	await discordClient.destroy();
+	logger.debug('Discord client destroyed.');
 });

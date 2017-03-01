@@ -4,6 +4,7 @@ mongo:
     - /var/opt/fpauth_db:/data/db
 node:
   build: .
+  restart: on-failure
   links:
     - mongo:mongo
   environment:
@@ -18,4 +19,6 @@ node:
     - FPAUTH_UPDATE_NICK=false
     - FPAUTH_FETCH_COOLDOWN=600
     - FPAUTH_MIN_POSTS=25
+    - FPAUTH_AUTH_WINDOW=600
+    - FPAUTH_CLEANUP_INTERVAL=600
     - FPAUTH_MONGO_URL=mongodb://mongo:27017/fpauth
