@@ -53,8 +53,10 @@ async function updateUserData(member, user, profileData) {
 	if (profileData.isGoldMember)
 		roles.push(config.get('roles.goldMember'));
 
-	if (profileData.isModerator)
+	if (profileData.isModerator) {
+		roles.push(config.get('roles.goldMember'));
 		roles.push(config.get('roles.moderator'));
+	}
 
 	await member.addRoles(roles);
 
