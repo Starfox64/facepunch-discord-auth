@@ -11,7 +11,11 @@ const config = require('./lib/config');
 const FPAUTH_REGEX = /^!fpauth ?(\d+)?$/;
 const GET_FPID_REGEX = /^!getfpid <@!?(\d+)>$/;
 const GET_DISCORDID_REGEX = /^!getdiscordid \d+$/;
+const SET_MPC_REGEX = /^!fpminpostcount \d+$/;
+const SET_CI_REGEX = /^!fpcleanupinterval \d+$/;
 const FP_PROFILE_URL = 'https://facepunch.com/member.php?u=';
+
+let botEnabled = true;
 
 async function sendWelcomeMessage(member) {
 	let user = await User.findOne({discordId: member.id});
@@ -46,6 +50,8 @@ Once you have your Facepunch ID type it in this channel like so: **!fpauth *<Fac
 async function updateUserData(member, user, profileData) {
 	user.facepunchId = profileData.facepunchId;
 	user.fetchedAt = Date.now();
+	user.isGoldMember = profileData.isGoldMember;
+	user.isModerator = profileData.isModerator;
 	await user.save();
 
 	let roles = [config.get('roles.member')];
@@ -74,6 +80,7 @@ async function updateUserData(member, user, profileData) {
 }
 
 async function cleanupLoop() {
+	if (!botEnabled) return;
 	let welcomeChannel = discordClient.guilds.get(config.get('discord.guild')).channels.get(config.get('discord.welcomeChannel'));
 	for (let member of welcomeChannel.members.values()) {
 		let user = await User.findOne({discordId: member.id});
@@ -118,6 +125,7 @@ discordClient.on('ready', async () => {
 });
 
 discordClient.on('guildMemberAdd', async (member) => {
+	if (!botEnabled) return;
 	if (member.user.bot) return;
 
 	let logMessage = `${member.user.username} @${member.id} joined the server.`;
@@ -140,6 +148,7 @@ discordClient.on('guildMemberAdd', async (member) => {
 });
 
 discordClient.on('guildMemberRemove', async (member) => {
+	if (!botEnabled) return;
 	if (member.user.bot) return;
 
 	let logMessage = `${member.user.username} @${member.id} left the server.`;
@@ -148,18 +157,29 @@ discordClient.on('guildMemberRemove', async (member) => {
 });
 
 discordClient.on('guildBanAdd', async (guild, user) => {
+	if (!botEnabled) return;
 	let logMessage = `${user.username} @${user.id} was banned from the server.`;
 	logger.info(logMessage);
 	await Event.create({type: 'ban', discordId: user.id, description: logMessage});
 });
 
 discordClient.on('guildBanRemove', async (guild, user) => {
+	if (!botEnabled) return;
 	let logMessage = `${user.username} @${user.id} was unbanned from the server.`;
 	logger.info(logMessage);
 	await Event.create({type: 'unban', discordId: user.id, description: logMessage});
 });
 
 discordClient.on('message', async (message) => {
+	if (!botEnabled) {
+		if (message.channel.id === config.get('discord.moderatorChannel') && message.content === '!fpon') {
+			botEnabled = true;
+			await message.channel.sendMessage('The bot is back online!');
+		}
+
+		return;
+	}
+
 	if (message.channel.id === config.get('discord.welcomeChannel') && FPAUTH_REGEX.test(message.content)) {
 		let member = message.member;
 		let user = await User.findOne({discordId: member.id});
@@ -228,12 +248,70 @@ discordClient.on('message', async (message) => {
 		if (!user || !user.facepunchId) return await message.channel.sendMessage(`Nobody is known by that Discord ID (${discordId})`);
 
 		await message.channel.sendMessage(`Here is <@${discordId}>'s facepunch profile ${FP_PROFILE_URL}${user.facepunchId}`);
+	} else if (message.channel.id === config.get('discord.moderatorChannel') && SET_MPC_REGEX.test(message.content)) {
+		let minPostCount = Number(message.content.substring(16));
+		minPostCount = Math.floor(minPostCount);
+
+		if (minPostCount < 0) return await message.channel.sendMessage('The minimum post count needs to be greater than 0.');
+
+		config.set('minPostCount', minPostCount);
+
+		await message.channel.sendMessage(`The minimum post count was set to ${minPostCount}. This setting will be reverted uppon restart!`);
+	} else if (message.channel.id === config.get('discord.moderatorChannel') && SET_CI_REGEX.test(message.content)) {
+		let interval = Number(message.content.substring(18));
+		interval = Math.floor(interval);
+
+		if (interval < 0) return await message.channel.sendMessage('The cleanup interval needs to be greater than 0.');
+
+		config.set('cleanupInterval', interval);
+
+		clearInterval(cleanupIntervalHandle);
+		cleanupIntervalHandle = setInterval(cleanupLoop, config.get('cleanupInterval') * 1000);
+
+		await message.channel.sendMessage(`The cleanup interval was set to ${interval}. This setting will be reverted uppon restart!`);
+	} else if (message.channel.id === config.get('discord.moderatorChannel') && message.content === '!fpreassign') {
+		await message.channel.sendMessage('Reassigning roles...');
+		logger.info('Reassigning roles...');
+
+		let guild = discordClient.guilds.get(config.get('discord.guild'));
+		for (let member of guild.members.values()) {
+			let memberId = config.get('roles.member');
+			let goldId = config.get('roles.goldMember');
+			let modId = config.get('roles.moderator');
+
+			let toRemove = [];
+			if (member.roles.has(memberId)) toRemove.push(memberId);
+			if (member.roles.has(goldId)) toRemove.push(goldId);
+			if (member.roles.has(modId)) toRemove.push(modId);
+
+			await member.removeRoles(toRemove);
+
+			let user = await User.findOne({discordId: member.id});
+			if (user && user.facepunchId) {
+				let roles = [memberId];
+
+				if (user.isGoldMember) roles.push(goldId);
+
+				if (user.isModerator) {
+					roles.push(goldId);
+					roles.push(modId);
+				}
+
+				await member.addRoles(roles);
+			}
+		}
+
+		await message.channel.sendMessage('Roles reassigned!');
+		logger.info('Roles reassigned!');
+	} else if (message.channel.id === config.get('discord.moderatorChannel') && message.content === '!fpoff') {
+		botEnabled = false;
+		await message.channel.sendMessage('The bot will no longer respond to any Discord event.');
 	}
 });
 
 discordClient.login(config.get('discord.token'));
 
-setInterval(cleanupLoop, config.get('cleanupInterval') * 1000);
+let cleanupIntervalHandle = setInterval(cleanupLoop, config.get('cleanupInterval') * 1000);
 
 // Treats unhandled errors in async code as regular errors.
 process.on('unhandledRejection', (err) => {
@@ -243,6 +321,7 @@ process.on('unhandledRejection', (err) => {
 });
 
 process.on('SIGTERM', async () => {
+	clearInterval(cleanupIntervalHandle);
 	logger.debug('Destroying discord client...');
 	await discordClient.destroy();
 	logger.debug('Discord client destroyed.');

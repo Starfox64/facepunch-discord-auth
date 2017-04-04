@@ -7,9 +7,11 @@ const db = require('../lib/db');
 const User = new mongoose.Schema({
 	facepunchId: {type: Number, index: true, unique: true, sparse: true},
 	discordId: {type: String, index: true, unique: true, required: true},
+	isGoldMember: {type: Boolean, required: true, default: false},
+	isModerator: {type: Boolean, required: true, default: false},
 	token: {type: String, index: true, unique: true, required: true},
 	fetchedAt: {type: Date, required: true, default: 0},
-	joinedAt: {type: Date, required: true, default: Date.now},
+	joinedAt: {type: Date, required: true, default: Date.now}
 });
 
 User.methods.canFetchProfile = function() {
