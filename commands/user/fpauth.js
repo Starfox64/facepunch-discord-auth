@@ -27,6 +27,10 @@ module.exports = class FPAuthCommand extends Commando.Command {
 		});
 	}
 
+	isUsable(message) {
+		return message.guild.settings.get('enabled', true);
+	}
+
 	async run(message, args) {
 		const member = message.member;
 		const facepunchId = args.facepunchId;

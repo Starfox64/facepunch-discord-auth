@@ -7,7 +7,7 @@ module.exports = class FPSetMaxIdleTime extends Commando.Command {
 			name: 'fpsetmaxidletime',
 			group: 'admin',
 			memberName: 'fpsetmaxidletime',
-			description: 'Sets the maximum amount of time an unauthenticated user can stay in the entry room.',
+			description: 'Sets the maximum amount of time an unauthenticated user can stay in the entry room (0 to disable).',
 			examples: ['fpsetmaxidletime 600'],
 			guildOnly: true,
 			args: [
