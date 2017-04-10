@@ -32,8 +32,8 @@ module.exports = class FPGetFacepunch extends Commando.Command {
 		const user = args.user;
 		let userData = await User.findOne({ discordId: user.id });
 
-		if (!userData || !userData.facepunchId) return await message.channel.sendMessage(`Nobody is known by that Discord ID (${user.id})`);
+		if (!userData || !userData.facepunchId) return message.reply(`Nobody is known by that Discord ID (${user.id})`);
 
-		await message.channel.sendMessage(`Here is <@${user.id}>'s facepunch profile ${constants.FP_PROFILE_URL}${userData.facepunchId}`);
+		return message.reply(`Here is <@${user.id}>'s facepunch profile ${constants.FP_PROFILE_URL}${userData.facepunchId}`);
 	}
 };

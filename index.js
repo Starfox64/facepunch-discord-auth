@@ -26,7 +26,7 @@ discordClient.registry.registerGroups([
 ])
 	.registerDefaultTypes()
 	.registerDefaultGroups()
-	.registerDefaultCommands({help: true})
+	.registerDefaultCommands({help: true, prefix: true, eval_: false, ping: false, commandState: false})
 	.registerCommandsIn(path.join(__dirname, 'commands'));
 
 discordClient.on('ready', async () => {
@@ -37,16 +37,17 @@ discordClient.on('ready', async () => {
 		})
 	}));
 
-	//TODO: Handle non registrar
-
 	for (let guild of discordClient.guilds.values()) {
-		if (!guild.settings.get('registrar', false)) continue;
-
-		const entryRoom = await util.getGuildEntryRoom(guild);
+		const entryRoom = util.getGuildEntryRoom(guild);
 		guild = await guild.fetchMembers();
 
 		for (const member of guild.members.values()) {
 			if (!member.user.bot && !(await User.findOne({ discordId: member.id }))) {
+				if (!guild.settings.get('registrar', false)) {
+					await util.sendRedirectMessage(entryRoom, member.user);
+					continue;
+				}
+
 				const user = await util.handleNewUser(member.id, true);
 				await util.sendWelcomeMessage(entryRoom, member.user, user.token);
 			}
@@ -60,12 +61,18 @@ discordClient.on('guildMemberAdd', async (member) => {
 	logger.info(`${member.user.username}#${member.user.discriminator} (${member.id}) joined ${member.guild.name} (${member.guild.id}).`);
 	await Event.create({ type: 'join', metadata: {user: member.id, guild: member.guild.id} });
 
-	//TODO: Handle non registrar
+	let user = await User.findOne({ discordId: member.id });
+	if (!user || !user.facepunchId) {
+		const entryRoom = util.getGuildEntryRoom(member.guild);
 
-	const user = await util.handleNewUser(member.id);
+		if (!member.guild.settings.get('registrar', false)) {
+			await util.sendRedirectMessage(entryRoom, member.user);
+			return;
+		}
 
-	if (!user.facepunchId)
-		return await util.sendWelcomeMessage(await util.getGuildEntryRoom(member.guild), member.user, user.token);
+		if (!user) user = await util.handleNewUser(member.id, true);
+		return await util.sendWelcomeMessage(util.getGuildEntryRoom(member.guild), member.user, user.token);
+	}
 
 	try {
 		var profileData = await fetchProfile(user.facepunchId);
@@ -100,7 +107,7 @@ discordClient.on('guildCreate', async (guild) => {
 
 discordClient.login(config.get('discord.token'));
 
-//let cleanupIntervalHandle = setInterval(util.getCleanupLoop(discordClient), config.get('cleanupInterval') * 1000);
+let cleanupIntervalHandle = setInterval(util.getCleanupLoop(discordClient), config.get('cleanupInterval') * 1000);
 
 // Treats unhandled errors in async code as regular errors.
 process.on('unhandledRejection', (err) => {
