@@ -11,6 +11,7 @@ const User = new mongoose.Schema({
 	isGoldMember: { type: Boolean },
 	isModerator: { type: Boolean },
 	username: { type: String },
+	aliases: [String],
 	token: { type: String, index: true, unique: true, required: true },
 	fetchedAt: { type: Date, required: true, default: 0 }
 });
