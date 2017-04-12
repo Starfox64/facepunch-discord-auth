@@ -4,8 +4,8 @@ const Discord = require('discord.js');
 const Commando = require('discord.js-commando');
 const MongooseProvider = require('./lib/mongoose-provider');
 const Guild = require('./models/guild');
+const Ban = require('./models/ban');
 const User = require('./models/user');
-const Event = require('./models/event');
 const fetchProfile = require('./lib/fetch-profile');
 const logger = require('./lib/logger');
 const config = require('./lib/config');
@@ -14,6 +14,8 @@ const path = require('path');
 
 let discordClient = new Commando.Client({
 	unknownCommandResponse: false,
+	fetchAllMembers: true,
+	disabledEvents: ['TYPING_START', 'VOICE_STATE_UPDATE', 'VOICE_SERVER_UPDATE', 'CHANNEL_PINS_UPDATE', 'PRESENCE_UPDATE'],
 	owner: config.get('discord.owner')
 });
 
@@ -37,12 +39,31 @@ discordClient.on('ready', async () => {
 		})
 	}));
 
-	for (let guild of discordClient.guilds.values()) {
+	for (const guild of discordClient.guilds.values()) {
+		if (!guild.settings.get('enabled', true)) continue;
 		const entryRoom = util.getGuildEntryRoom(guild);
-		guild = await guild.fetchMembers();
 
 		for (const member of guild.members.values()) {
-			if (!member.user.bot && !(await User.findOne({ discordId: member.id }))) {
+			if (member.user.bot) continue;
+
+			const banRole = guild.settings.get('banRole');
+			if (banRole && !member.roles.has(banRole)) {
+				const bans = await Ban.findActiveBans(member, guild);
+
+				if (bans.length > 0) {
+					try {
+						await member.addRole(banRole);
+					} catch (e) {
+						if (e.status == 403) {
+							logger.warn(`Could not add the ban role to ${member.user.username}#${member.user.discriminator} (${member.id}), permission denied.`);
+						} else {
+							logger.error(e);
+						}
+					}
+				}
+			}
+
+			if (!(await User.findOne({ discordId: member.id }))) {
 				if (!guild.settings.get('registrar', false)) {
 					await util.sendRedirectMessage(entryRoom, member.user);
 					continue;
@@ -58,8 +79,26 @@ discordClient.on('ready', async () => {
 discordClient.on('guildMemberAdd', async (member) => {
 	if (member.user.bot) return;
 
-	logger.info(`${member.user.username}#${member.user.discriminator} (${member.id}) joined ${member.guild.name} (${member.guild.id}).`);
-	await Event.create({ type: 'join', metadata: {user: member.id, guild: member.guild.id} });
+	await util.log(member.guild, `${member.user.username}#${member.user.discriminator} (<@${member.id}>) joined.`);
+
+	if (!member.guild.settings.get('enabled', true)) return;
+
+	const banRole = member.guild.settings.get('banRole');
+	if (banRole && !member.roles.has(banRole)) {
+		const bans = await Ban.findActiveBans(member, member.guild);
+
+		if (bans.length > 0) {
+			try {
+				await member.addRole(banRole);
+			} catch (e) {
+				if (e.status == 403) {
+					logger.warn(`Could not add the ban role to ${member.user.username}#${member.user.discriminator} (${member.id}), permission denied.`);
+				} else {
+					logger.error(e);
+				}
+			}
+		}
+	}
 
 	let user = await User.findOne({ discordId: member.id });
 	if (!user || !user.facepunchId) {
@@ -86,23 +125,28 @@ discordClient.on('guildMemberAdd', async (member) => {
 
 discordClient.on('guildMemberRemove', async (member) => {
 	if (member.user.bot) return;
-
-	logger.info(`${member.user.username}#${member.user.discriminator} (${member.id}) left ${member.guild.name} (${member.guild.id}).`);
-	await Event.create({ type: 'leave', metadata: { user: member.id, guild: member.guild.id } });
-});
-
-discordClient.on('guildBanAdd', async (guild, user) => {
-	logger.info(`${user.username}#${user.discriminator} (${user.id}) was banned from ${guild.name} (${guild.id}).`);
-	await Event.create({ type: 'ban', metadata: { user: user.id, guild: guild.id } });
-});
-
-discordClient.on('guildBanRemove', async (guild, user) => {
-	logger.info(`${user.username}#${user.discriminator} (${user.id}) was unbanned from ${guild.name} (${guild.id}).`);
-	await Event.create({ type: 'unban', metadata: { user: user.id, guild: guild.id } });
+	await util.log(member.guild, `${member.user.username}#${member.user.discriminator} (<@${member.id}>) left.`);
 });
 
 discordClient.on('guildCreate', async (guild) => {
 	logger.info(`Guild ${guild.name} (${guild.id}) added.`);
+});
+
+discordClient.on('error', logger.error);
+discordClient.on('warn', logger.warn);
+discordClient.on('debug', logger.debug);
+
+discordClient.on('disconnect', () => {
+	logger.warn('Disconnected!');
+});
+
+discordClient.on('reconnecting', () => {
+	logger.warn('Reconnecting...');
+});
+
+discordClient.on('commandError', (cmd, err) => {
+	if (err instanceof Commando.FriendlyError) return;
+	logger.error(`Error in command ${cmd.groupID}:${cmd.memberName}`, err);
 });
 
 discordClient.login(config.get('discord.token'));

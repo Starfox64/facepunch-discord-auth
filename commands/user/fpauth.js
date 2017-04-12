@@ -1,7 +1,6 @@
 const Commando = require('discord.js-commando');
 const logger = require('../../lib/logger');
 const User = require('../../models/user');
-const Event = require('../../models/event');
 const config = require('../../lib/config');
 const fetchProfile = require('../../lib/fetch-profile');
 const util = require('../../lib/util');
@@ -28,7 +27,7 @@ module.exports = class FPAuthCommand extends Commando.Command {
 	}
 
 	isUsable(message) {
-		return message.guild.settings.get('enabled', true);
+		return message.guild.settings.get('enabled', true) && message.guild.settings.get('registrar', false);
 	}
 
 	async run(message, args) {
@@ -37,10 +36,10 @@ module.exports = class FPAuthCommand extends Commando.Command {
 		let user = await User.findOne({discordId: member.id});
 
 		if (!user)
-			return await util.handleNewUser(member.id, true);
+			user = await util.handleNewUser(member.id, true);
 
 		if (user.facepunchId)
-			return await message.reply(`<@${member.id}> You have already authenticated your profile recently, please wait before doing it again.`);
+			return await message.reply('You have already authenticated your profile.');
 
 		let abort = false;
 		try {
@@ -50,28 +49,28 @@ module.exports = class FPAuthCommand extends Commando.Command {
 			abort = true;
 		}
 
-		if (abort || !profileData.ok) {
-			return await message.reply('Sorry, something went wrong...');
-		}
+		if (abort || !profileData.ok)
+			return message.reply('Sorry, something went wrong...');
 
 		logger.debug(profileData);
 
 		if (!profileData.token)
-			return message.reply(`<@${member.id}> It seems you have not set your token. Make sure your profile is public and that your **Flickr username** is set to **${user.token}**`);
+			return message.reply(`It seems you have not set your token. Make sure your profile is public and that your **Flickr username** is set to **${user.token}**`);
 
 		if (profileData.token !== user.token)
-			return message.reply(`<@${member.id}> Your token does not match. You should set your **Flickr username** to **${user.token}**`);
+			return message.reply(`Your token does not match. You should set your **Flickr username** to **${user.token}**`);
 
 		let minPostCount = message.guild.settings.get('minPostCount', config.get('minPostCount'));
 		if (profileData.postCount < minPostCount)
-			return message.reply(`<@${member.id}> Sorry, you need to have at least ${minPostCount} posts to join this server. Come back when you meet this requirement.`);
+			return message.reply(`Sorry, you need to have at least ${minPostCount} posts to authenticate. Come back when you meet this requirement.`);
 
 		await user.updateFromProfileData(profileData);
 		await util.updateDiscord(member, user);
 
-		logger.info(`${member.user.username}#${member.user.discriminator} (${member.id}) linked his FP Account ID: ${facepunchId} USERNAME: ${profileData.username}.`);
-		await Event.create({ type: 'auth', metadata: {discordId: member.id, facepunchId} });
+		//TODO: Update non-registrar guilds
 
-		return message.reply(`Congratulation <@${member.id}>, your account is now linked!`);
+		logger.info(`${member.user.username}#${member.user.discriminator} (${member.id}) linked his FP Account ID: ${facepunchId} USERNAME: ${profileData.username}.`);
+
+		return message.reply('Congratulation, your account is now linked!');
 	}
 };

@@ -18,6 +18,6 @@ module.exports = class FPSetModeratorChannel extends Commando.Command {
 
 	async run(message) {
 		await message.guild.settings.set('moderatorChannel', message.channel.id);
-		return message.reply(`The moderator channel was set to ${message.channel.name}.`);
+		return message.reply(`The moderator channel was set to **${message.channel.name}**.`);
 	}
 };

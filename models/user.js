@@ -15,12 +15,12 @@ const User = new mongoose.Schema({
 	fetchedAt: { type: Date, required: true, default: 0 }
 });
 
-User.methods.canFetchProfile = () => {
+User.methods.canFetchProfile = function() {
 	let ts = this.fetchedAt.getTime() / 1000;
 	return util.currentTimestamp() < ts + config.get('fetchCooldown');
 };
 
-User.methods.updateFromProfileData = async (profileData) => {
+User.methods.updateFromProfileData = async function(profileData) {
 	this.facepunchId = profileData.facepunchId;
 	this.fetchedAt = Date.now();
 	this.isGoldMember = profileData.isGoldMember;

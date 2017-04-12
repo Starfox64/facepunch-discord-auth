@@ -29,6 +29,6 @@ module.exports = class FPSetMaxIdleTime extends Commando.Command {
 
 	async run(message, args) {
 		await message.guild.settings.set('maxIdleTime', args.maxIdleTime);
-		return message.reply(`The maximum idle time was set to ${args.maxIdleTime} seconds.`);
+		return message.reply(`The maximum idle time was set to **${args.maxIdleTime}** seconds.`);
 	}
 };

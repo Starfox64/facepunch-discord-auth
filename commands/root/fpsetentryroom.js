@@ -18,6 +18,6 @@ module.exports = class FPSetEntryRoom extends Commando.Command {
 
 	async run(message) {
 		await message.guild.settings.set('entryRoom', message.channel.id);
-		return message.reply(`The entry room was set to ${message.channel.name}.`);
+		return message.reply(`The entry room was set to **${message.channel.name}**.`);
 	}
 };
