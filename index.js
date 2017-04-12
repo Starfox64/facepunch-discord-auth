@@ -128,6 +128,17 @@ discordClient.on('guildMemberRemove', async (member) => {
 	await util.log(member.guild, `${member.user.username}#${member.user.discriminator} (<@${member.id}>) left.`);
 });
 
+discordClient.on('guildMemberUpdate', async (oldMember, newMember) => {
+	if (!oldMember.user.bot && oldMember.nickname !== newMember.nickname) {
+		await util.log(oldMember.guild, `${oldMember.user.username}#${oldMember.user.discriminator} (<@${oldMember.id}>) changed their nickname from **${oldMember.nickname}** to **${newMember.nickname}**.`);
+
+		const aliases = [];
+		if (oldMember.nickname) aliases.push(oldMember.nickname);
+		if (newMember.nickname) aliases.push(newMember.nickname);
+		await User.update({ discordId: oldMember.id }, { $addToSet: { aliases: { $each: aliases } } });
+	}
+});
+
 discordClient.on('guildCreate', async (guild) => {
 	logger.info(`Guild ${guild.name} (${guild.id}) added.`);
 });
