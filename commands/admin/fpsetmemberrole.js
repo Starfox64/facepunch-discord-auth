@@ -8,7 +8,7 @@ module.exports = class FPSetMemberRole extends Commando.Command {
 			group: 'admin',
 			memberName: 'fpsetmemberrole',
 			description: 'Sets the role that will be applied to members.',
-			examples: ['fpsetmemberrole #Member'],
+			examples: ['fpsetmemberrole @Member'],
 			guildOnly: true,
 			args: [
 				{
@@ -28,6 +28,6 @@ module.exports = class FPSetMemberRole extends Commando.Command {
 
 	async run(message, args) {
 		await message.guild.settings.set('memberRole', args.role.id);
-		return message.reply(`The member role was set to ${args.role.name}.`);
+		return message.reply(`The member role was set to **${args.role.name}**.`);
 	}
 };

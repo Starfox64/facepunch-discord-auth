@@ -22,7 +22,9 @@ module.exports = class FPOff extends Commando.Command {
 	}
 
 	async run(message) {
+		const user = message.member.user;
 		await message.guild.settings.set('enabled', false);
+		await util.log(message.guild, `${user.username}#${user.discriminator} (<@${user.id}>) turned off the bot.`);
 		return message.reply('The bot is has been disabled.');
 	}
 };

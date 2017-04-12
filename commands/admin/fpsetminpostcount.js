@@ -29,6 +29,6 @@ module.exports = class FPSetMinPostCount extends Commando.Command {
 
 	async run(message, args) {
 		await message.guild.settings.set('minPostCount', args.minPostCount);
-		return message.reply(`The minimum post count was set to ${args.minPostCount}.`);
+		return message.reply(`The minimum post count was set to **${args.minPostCount}**.`);
 	}
 };
