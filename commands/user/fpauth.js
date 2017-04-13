@@ -39,7 +39,7 @@ module.exports = class FPAuthCommand extends Commando.Command {
 			user = await util.handleNewUser(member.id, true);
 
 		if (user.facepunchId)
-			return await message.reply('You have already authenticated your profile.');
+			return message.reply('You have already authenticated your profile.');
 
 		let abort = false;
 		try {
@@ -69,7 +69,7 @@ module.exports = class FPAuthCommand extends Commando.Command {
 
 		//TODO: Update non-registrar guilds
 
-		logger.info(`${member.user.username}#${member.user.discriminator} (${member.id}) linked his FP Account ID: ${facepunchId} USERNAME: ${profileData.username}.`);
+		await util.log(message.guild, `${member.user.username}#${member.user.discriminator} (<@${member.id}>) linked his FP Account ID: ${facepunchId} USERNAME: ${profileData.username}.`);
 
 		return message.reply('Congratulation, your account is now linked!');
 	}

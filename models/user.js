@@ -17,18 +17,18 @@ const User = new mongoose.Schema({
 });
 
 User.methods.canFetchProfile = function() {
-	let ts = this.fetchedAt.getTime() / 1000;
-	return util.currentTimestamp() < ts + config.get('fetchCooldown');
+	let fetchedAt = this.fetchedAt.getTime() / 1000;
+	return util.currentTimestamp() > fetchedAt + config.get('fetchCooldown');
 };
 
-User.methods.updateFromProfileData = async function(profileData) {
+User.methods.updateFromProfileData = function(profileData) {
 	this.facepunchId = profileData.facepunchId;
 	this.fetchedAt = Date.now();
 	this.isGoldMember = profileData.isGoldMember;
 	this.isModerator = profileData.isModerator;
 	this.username = profileData.username;
 
-	await this.save();
+	return this.save();
 };
 
 module.exports = db.model('User', User);
