@@ -6,7 +6,6 @@ const MongooseProvider = require('./lib/mongoose-provider');
 const Guild = require('./models/guild');
 const Ban = require('./models/ban');
 const User = require('./models/user');
-const fetchProfile = require('./lib/fetch-profile');
 const logger = require('./lib/logger');
 const config = require('./lib/config');
 const util = require('./lib/util');
@@ -113,13 +112,6 @@ discordClient.on('guildMemberAdd', async (member) => {
 		return await util.sendWelcomeMessage(util.getGuildEntryRoom(member.guild), member.user, user.token);
 	}
 
-	try {
-		var profileData = await fetchProfile(user.facepunchId);
-	} catch (e) {
-		return logger.error(e);
-	}
-
-	await user.updateFromProfileData(profileData);
 	await util.updateDiscord(member, user);
 });
 
