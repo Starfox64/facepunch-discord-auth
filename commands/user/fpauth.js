@@ -60,6 +60,9 @@ module.exports = class FPAuthCommand extends Commando.Command {
 		if (profileData.token !== user.token)
 			return message.reply(`Your token does not match. You should set your **Flickr username** to **${user.token}**`);
 
+		if (profileData.isBanned)
+			return message.reply('Your Facepunch account is currently banned, come back when it\'s not.');
+
 		let minPostCount = message.guild.settings.get('minPostCount', config.get('minPostCount'));
 		if (profileData.postCount < minPostCount)
 			return message.reply(`Sorry, you need to have at least ${minPostCount} posts to authenticate. Come back when you meet this requirement.`);

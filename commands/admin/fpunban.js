@@ -33,18 +33,40 @@ module.exports = class FPUnBan extends Commando.Command {
 		const guild = message.guild;
 		const moderator = message.member;
 		const user = args.user;
-		const userData = User.findOne({ discordId: user.id });
-		const toUnBan = [user.id];
+		const userData = await User.findOne({ discordId: user.id });
+		const toUnBanId = [user.id];
+		const toUnBan = [userData];
 
 		if (userData && userData.facepunchId) {
-			const alts = User.find({ facepunchId: userData.facepunchId, discordId: { $not: user.id } });
+			const alts = await User.find({ facepunchId: userData.facepunchId, discordId: { $ne: user.id } });
 
 			for (const alt of alts) {
-				toUnBan.push(alt.discordId);
+				toUnBanId.push(alt.discordId);
+				toUnBan.push(alt);
 			}
 		}
 
-		await Ban.remove({ user: { $in: toUnBan }, guild: guild.id, $where: 'this.duration === 0 || this.createdAt + this.duration * 1000 > new Date()' });
+		await Ban.remove({ user: { $in: toUnBanId }, guild: guild.id, $where: 'this.duration === 0 || this.createdAt + this.duration * 1000 > new Date()' });
+
+		const banRole = guild.settings.get('banRole');
+		const memberRole = guild.settings.get('memberRole');
+
+		for (const data of toUnBan) {
+			if (guild.members.has(data.discordId)) {
+				const member = guild.members.get(data.discordId);
+
+				try {
+					if (member.roles.has(banRole)) await member.removeRole(banRole);
+					if (!member.roles.has(memberRole) && data.facepunchId) await member.addRole(memberRole);
+				} catch (e) {
+					if (e.status == 403) {
+						await message.reply('Could not remove the banned role, permission denied.');
+					} else {
+						logger.error(e);
+					}
+				}
+			}
+		}
 
 		await util.log(guild, `${user.username}#${user.discriminator} (<@${user.id}>) was unbanned by ${moderator.user.username}#${moderator.user.discriminator} (<@${moderator.id}>).`);
 

@@ -14,7 +14,7 @@ const path = require('path');
 let discordClient = new Commando.Client({
 	unknownCommandResponse: false,
 	fetchAllMembers: true,
-	disabledEvents: ['TYPING_START', 'VOICE_STATE_UPDATE', 'VOICE_SERVER_UPDATE', 'CHANNEL_PINS_UPDATE', 'PRESENCE_UPDATE'],
+	disabledEvents: ['TYPING_START', 'VOICE_STATE_UPDATE', 'VOICE_SERVER_UPDATE', 'CHANNEL_PINS_UPDATE'],
 	owner: config.get('discord.owner')
 });
 
@@ -27,6 +27,7 @@ discordClient.registry.registerGroups([
 ])
 	.registerDefaultTypes()
 	.registerDefaultGroups()
+	.registerTypesIn(path.join(__dirname, 'types'))
 	.registerDefaultCommands({help: true, prefix: true, eval_: false, ping: false, commandState: false})
 	.registerCommandsIn(path.join(__dirname, 'commands'));
 
@@ -46,12 +47,14 @@ discordClient.on('ready', async () => {
 			if (member.user.bot) continue;
 
 			const banRole = guild.settings.get('banRole');
+			const memberRole = guild.settings.get('memberRole');
 			if (banRole && !member.roles.has(banRole)) {
 				const bans = await Ban.findActiveBans(member, guild);
 
 				if (bans.length > 0) {
 					try {
-						await member.addRole(banRole);
+						if (!member.roles.has(banRole)) await member.addRole(banRole);
+						if (member.roles.has(memberRole)) await member.removeRole(memberRole);
 					} catch (e) {
 						if (e.status == 403) {
 							logger.warn(`Could not add the ban role to ${member.user.username}#${member.user.discriminator} (${member.id}), permission denied.`);
@@ -160,6 +163,7 @@ let cleanupIntervalHandle = setInterval(util.getCleanupLoop(discordClient), conf
 process.on('unhandledRejection', (err) => {
 	logger.debug('The following error was thrown from an unhandledRejection event.');
 	logger.error(err);
+	logger.debug(err);
 	process.exit(1);
 });
 
