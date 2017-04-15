@@ -11,7 +11,7 @@ module.exports = class FPBan extends Commando.Command {
 			group: 'admin',
 			memberName: 'fpban',
 			description: 'Bans a user and all of his alt discord accounts.',
-			examples: ['fpban @Postal 1440 "loss"'],
+			examples: ['fpban @Postal 1d "loss"'],
 			guildOnly: true,
 			args: [
 				{
@@ -22,11 +22,10 @@ module.exports = class FPBan extends Commando.Command {
 					wait: 30
 				},
 				{
-					key: 'minutes',
-					label: 'Minutes (0=perm)',
-					prompt: 'For how many minutes (0 is perm)?',
-					type: 'integer',
-					min: 0,
+					key: 'duration',
+					label: 'Duration (0h=perm)',
+					prompt: 'For how many minutes (0h is perm)?',
+					type: 'duration',
 					default: 0,
 					wait: 30
 				},
@@ -50,10 +49,13 @@ module.exports = class FPBan extends Commando.Command {
 		const guild = message.guild;
 		const moderator = message.member;
 		const user = args.user;
-		const minutes = args.minutes;
+		const duration = args.duration;
 		const reason = args.reason;
-		const userData = User.findOne({ discordId: user.id });
+		const userData = await User.findOne({ discordId: user.id });
 		const toBan = [user.id];
+
+		const banRole = guild.settings.get('banRole');
+		const memberRole = guild.settings.get('memberRole');
 
 		if (message.channel.members.has(user.id) && !this.client.isOwner(message.member.user))
 			return message.reply('You cannot ban a member of the moderator channel.');
@@ -62,7 +64,7 @@ module.exports = class FPBan extends Commando.Command {
 			return message.reply('The server does not have a ban role, see fpsetbanrole.');
 
 		if (userData && userData.facepunchId) {
-			const alts = User.find({ facepunchId: userData.facepunchId, discordId: { $not: user.id } });
+			const alts = await User.find({ facepunchId: userData.facepunchId, discordId: { $ne: user.id } });
 
 			for (const alt of alts) {
 				toBan.push(alt.discordId);
@@ -75,7 +77,7 @@ module.exports = class FPBan extends Commando.Command {
 				moderator: moderator.id,
 				guild: guild.id,
 				reason,
-				duration: minutes * 60
+				duration
 			});
 
 			if (guild.members.has(id)) {
@@ -83,7 +85,8 @@ module.exports = class FPBan extends Commando.Command {
 				await member.sendMessage(ban.formatReason());
 
 				try {
-					await member.addRole(guild.settings.get('banRole'));
+					if (!member.roles.has(banRole)) await member.addRole(banRole);
+					if (member.roles.has(memberRole)) await member.removeRole(memberRole);
 				} catch (e) {
 					if (e.status == 403) {
 						await message.reply('Could not assign the banned role, permission denied.');
@@ -94,8 +97,8 @@ module.exports = class FPBan extends Commando.Command {
 					return await ban.remove();
 				}
 
-				const duration = ban.duration === 0 ? 'permanently' : ban.duration / 60 + ' minutes';
-				await util.log(guild, `${member.username}#${member.discriminator} (<@${member.id}>) was banned by ${moderator.user.username}#${moderator.user.discriminator} (<@${moderator.id}>) ${duration} for "${reason}".`);
+				const durationText = ban.duration === 0 ? 'permanently' : ban.duration / 60 + ' minutes';
+				await util.log(guild, `${member.user.username}#${member.user.discriminator} (<@${member.id}>) was banned by ${moderator.user.username}#${moderator.user.discriminator} (<@${moderator.id}>) ${durationText} for "${reason}".`);
 			}
 		}
 
