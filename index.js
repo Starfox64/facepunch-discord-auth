@@ -40,7 +40,7 @@ discordClient.on('ready', async () => {
 	}));
 
 	for (const guild of discordClient.guilds.values()) {
-		if (!guild.settings.get('enabled', true)) continue;
+		if (!guild.settings.get('enabled', false)) continue;
 		const entryRoom = util.getGuildEntryRoom(guild);
 
 		for (const member of guild.members.values()) {
@@ -83,7 +83,7 @@ discordClient.on('guildMemberAdd', async (member) => {
 
 	await util.log(member.guild, `${member.user.username}#${member.user.discriminator} (<@${member.id}>) joined.`);
 
-	if (!member.guild.settings.get('enabled', true)) return;
+	if (!member.guild.settings.get('enabled', false)) return;
 
 	const banRole = member.guild.settings.get('banRole');
 	if (banRole && !member.roles.has(banRole)) {

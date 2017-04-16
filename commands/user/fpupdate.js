@@ -17,7 +17,7 @@ module.exports = class FPUpdate extends Commando.Command {
 	}
 
 	isUsable(message) {
-		return message.guild.settings.get('enabled', true) && message.guild.settings.get('registrar', false);
+		return message.guild.settings.get('enabled', false) && message.guild.settings.get('registrar', false);
 	}
 
 	async run(message) {
