@@ -98,7 +98,7 @@ module.exports = class FPBan extends Commando.Command {
 				}
 
 				const durationText = ban.duration === 0 ? 'permanently' : ban.duration / 60 + ' minutes';
-				await util.log(guild, `${member.user.username}#${member.user.discriminator} (<@${member.id}>) was banned by ${moderator.user.username}#${moderator.user.discriminator} (<@${moderator.id}>) ${durationText} for "${reason}".`);
+				await util.log(guild, `**BAN**: ${member.user.username}#${member.user.discriminator} (<@${member.id}>) was banned by ${moderator.user.username}#${moderator.user.discriminator} (<@${moderator.id}>) ${durationText} for "${reason}".`);
 			}
 		}
 

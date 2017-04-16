@@ -19,7 +19,7 @@ module.exports = class FPAssign extends Commando.Command {
 	}
 
 	async run(message) {
-		const user = message.member.user;
+		const moderator = message.member.user;
 
 		await message.reply('Setting roles and nicknames...');
 
@@ -28,7 +28,7 @@ module.exports = class FPAssign extends Commando.Command {
 			if (user) await util.updateDiscord(member, user);
 		}
 
-		await util.log(message.guild, `${user.username}#${user.discriminator} (<@${user.id}>) used fpassign.`);
+		await util.log(message.guild, `**ASSIGN**: ${moderator.username}#${moderator.discriminator} (<@${moderator.id}>) used fpassign.`);
 		return message.reply('Done!');
 	}
 };

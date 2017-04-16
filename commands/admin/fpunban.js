@@ -68,7 +68,7 @@ module.exports = class FPUnBan extends Commando.Command {
 			}
 		}
 
-		await util.log(guild, `${user.username}#${user.discriminator} (<@${user.id}>) was unbanned by ${moderator.user.username}#${moderator.user.discriminator} (<@${moderator.id}>).`);
+		await util.log(guild, `**UNBAN**: ${user.username}#${user.discriminator} (<@${user.id}>) was unbanned by ${moderator.user.username}#${moderator.user.discriminator} (<@${moderator.id}>).`);
 
 		return message.reply(`Unbanned ${user.username}.`);
 	}

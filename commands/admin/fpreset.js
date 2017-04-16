@@ -26,7 +26,7 @@ module.exports = class FPReset extends Commando.Command {
 			await util.resetDiscord(member);
 		}
 
-		await util.log(message.guild, `${user.username}#${user.discriminator} (<@${user.id}>) used fpreset.`);
+		await util.log(message.guild, `**RESET**: ${user.username}#${user.discriminator} (<@${user.id}>) used fpreset.`);
 		return message.reply('Done!');
 	}
 };

@@ -24,7 +24,7 @@ module.exports = class FPOn extends Commando.Command {
 	async run(message) {
 		const user = message.member.user;
 		await message.guild.settings.set('enabled', true);
-		await util.log(message.guild, `${user.username}#${user.discriminator} (<@${user.id}>) turned the bot back on.`);
+		await util.log(message.guild, `**ON**: ${user.username}#${user.discriminator} (<@${user.id}>) turned the bot back on.`);
 		return message.reply('The bot is back online.');
 	}
 };

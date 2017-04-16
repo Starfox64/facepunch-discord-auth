@@ -73,7 +73,7 @@ discordClient.on('ready', async () => {
 discordClient.on('guildMemberAdd', async (member) => {
 	if (member.user.bot) return;
 
-	await util.log(member.guild, `${member.user.username}#${member.user.discriminator} (<@${member.id}>) joined.`);
+	await util.log(member.guild, `**JOIN**: ${member.user.username}#${member.user.discriminator} (<@${member.id}>) joined.`);
 
 	if (!member.guild.settings.get('enabled', false)) return;
 
@@ -112,12 +112,12 @@ discordClient.on('guildMemberAdd', async (member) => {
 
 discordClient.on('guildMemberRemove', async (member) => {
 	if (member.user.bot) return;
-	await util.log(member.guild, `${member.user.username}#${member.user.discriminator} (<@${member.id}>) left.`);
+	await util.log(member.guild, `**LEAVE**: ${member.user.username}#${member.user.discriminator} (<@${member.id}>) left.`);
 });
 
 discordClient.on('guildMemberUpdate', async (oldMember, newMember) => {
 	if (!oldMember.user.bot && oldMember.nickname !== newMember.nickname) {
-		await util.log(oldMember.guild, `${oldMember.user.username}#${oldMember.user.discriminator} (<@${oldMember.id}>) changed their nickname from **${oldMember.nickname}** to **${newMember.nickname}**.`);
+		await util.log(oldMember.guild, `**NICK**: ${oldMember.user.username}#${oldMember.user.discriminator} (<@${oldMember.id}>) changed their nickname from **${oldMember.nickname}** to **${newMember.nickname}**.`);
 
 		const aliases = [];
 		if (oldMember.nickname) aliases.push(oldMember.nickname);

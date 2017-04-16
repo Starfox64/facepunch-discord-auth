@@ -68,12 +68,11 @@ module.exports = class FPAuthCommand extends Commando.Command {
 			return message.reply(`Sorry, you need to have at least ${minPostCount} posts to authenticate. Come back when you meet this requirement.`);
 
 		await user.updateFromProfileData(profileData);
+		await message.reply('Congratulation, your account is now linked!');
 		await util.updateDiscord(member, user);
 
 		//TODO: Update non-registrar guilds
 
-		await util.log(message.guild, `${member.user.username}#${member.user.discriminator} (<@${member.id}>) linked his FP Account ID: ${facepunchId} USERNAME: ${profileData.username}.`);
-
-		return message.reply('Congratulation, your account is now linked!');
+		await util.log(message.guild, `**AUTH**: ${member.user.username}#${member.user.discriminator} (<@${member.id}>) linked his FP Account ID: ${facepunchId} USERNAME: ${profileData.username}.`);
 	}
 };
