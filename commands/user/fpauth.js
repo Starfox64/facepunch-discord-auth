@@ -1,4 +1,5 @@
 const Commando = require('discord.js-commando');
+const escapeMarkdown = require('discord.js').escapeMarkdown;
 const logger = require('../../lib/logger');
 const User = require('../../models/user');
 const config = require('../../lib/config');
@@ -55,10 +56,10 @@ module.exports = class FPAuthCommand extends Commando.Command {
 		logger.debug(profileData);
 
 		if (!profileData.token)
-			return message.reply(`It seems you have not set your token. Make sure your profile is public and that your **Flickr username** is set to **${user.token}**`);
+			return message.reply(`It seems you have not set your token. Make sure your profile is public and that your **Flickr username** is set to **${escapeMarkdown(user.token)}**`);
 
 		if (profileData.token !== user.token)
-			return message.reply(`Your token does not match. You should set your **Flickr username** to **${user.token}**`);
+			return message.reply(`Your token does not match. You should set your **Flickr username** to **${escapeMarkdown(user.token)}**`);
 
 		if (profileData.isBanned)
 			return message.reply('Your Facepunch account is currently banned, come back when it\'s not.');
