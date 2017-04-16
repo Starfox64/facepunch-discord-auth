@@ -1,6 +1,5 @@
 'use strict';
 
-const Discord = require('discord.js');
 const Commando = require('discord.js-commando');
 const MongooseProvider = require('./lib/mongoose-provider');
 const Guild = require('./models/guild');
@@ -32,13 +31,6 @@ discordClient.registry.registerGroups([
 	.registerCommandsIn(path.join(__dirname, 'commands'));
 
 discordClient.on('ready', async () => {
-	discordClient.user.setPresence(new Discord.Presence({
-		status: 'online',
-		game: new Discord.Game({
-			name: 'with postal\'s ass'
-		})
-	}));
-
 	for (const guild of discordClient.guilds.values()) {
 		if (!guild.settings.get('enabled', false)) continue;
 		const entryRoom = util.getGuildEntryRoom(guild);
