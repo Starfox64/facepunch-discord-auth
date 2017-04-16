@@ -18,7 +18,7 @@ module.exports = class FPOff extends Commando.Command {
 	}
 
 	isUsable(message) {
-		return message.guild.settings.get('enabled', true);
+		return message.guild.settings.get('enabled', false);
 	}
 
 	async run(message) {
