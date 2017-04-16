@@ -14,11 +14,7 @@ module.exports = class FPOn extends Commando.Command {
 	}
 
 	hasPermission(message) {
-		return util.isInModeratorChannel(message);
-	}
-
-	isUsable(message) {
-		return !message.guild.settings.get('enabled', false);
+		return !message.guild.settings.get('enabled', false) && util.isInModeratorChannel(message);
 	}
 
 	async run(message) {

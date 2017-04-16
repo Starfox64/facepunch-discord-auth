@@ -16,7 +16,7 @@ module.exports = class FPUpdate extends Commando.Command {
 		});
 	}
 
-	isUsable(message) {
+	hasPermission(message) {
 		return message.guild.settings.get('enabled', false) && message.guild.settings.get('registrar', false);
 	}
 
