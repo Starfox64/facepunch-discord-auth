@@ -82,9 +82,9 @@ module.exports = class FPBan extends Commando.Command {
 
 			if (guild.members.has(id)) {
 				const member = guild.members.get(id);
-				await member.sendMessage(ban.formatReason());
 
 				try {
+					if (duration === 0) await util.kick(member, ban.formatReason(), true);
 					if (!member.roles.has(banRole)) await member.addRole(banRole);
 					if (member.roles.has(memberRole)) await member.removeRole(memberRole);
 				} catch (e) {

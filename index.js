@@ -59,12 +59,12 @@ discordClient.on('ready', async () => {
 
 			if (!(await User.findOne({ discordId: member.id }))) {
 				if (!guild.settings.get('registrar', false)) {
-					await util.sendRedirectMessage(entryRoom, member.user);
+					//await util.sendRedirectMessage(entryRoom, member.user);
 					continue;
 				}
 
 				const user = await util.handleNewUser(member.id, true);
-				await util.sendWelcomeMessage(entryRoom, member.user, user.token);
+				//await util.sendWelcomeMessage(entryRoom, member.user, user.token);
 			}
 		}
 	}
