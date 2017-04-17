@@ -84,9 +84,13 @@ module.exports = class FPBan extends Commando.Command {
 				const member = guild.members.get(id);
 
 				try {
-					if (duration === 0) await util.kick(member, ban.formatReason(), true);
-					if (!member.roles.has(banRole)) await member.addRole(banRole);
-					if (member.roles.has(memberRole)) await member.removeRole(memberRole);
+					if (duration === 0) {
+						await util.kick(member, ban.formatReason(), true);
+					} else {
+						await member.sendMessage(ban.formatReason());
+						if (!member.roles.has(banRole)) await member.addRole(banRole);
+						if (member.roles.has(memberRole)) await member.removeRole(memberRole);
+					}
 				} catch (e) {
 					if (e.status == 403) {
 						await message.reply('Could not assign the banned role, permission denied.');

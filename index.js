@@ -44,9 +44,15 @@ discordClient.on('ready', async () => {
 				const bans = await Ban.findActiveBans(member, guild);
 
 				if (bans.length > 0) {
+					const ban = bans[0];
 					try {
-						if (!member.roles.has(banRole)) await member.addRole(banRole);
-						if (member.roles.has(memberRole)) await member.removeRole(memberRole);
+						if (ban.duration === 0) {
+							await util.kick(member, ban.formatReason(), true);
+						} else {
+							await member.sendMessage(ban.formatReason());
+							if (!member.roles.has(banRole)) await member.addRole(banRole);
+							if (member.roles.has(memberRole)) await member.removeRole(memberRole);
+						}
 					} catch (e) {
 						if (e.status == 403) {
 							logger.warn(`Could not add the ban role to ${member.user.username}#${member.user.discriminator} (${member.id}), permission denied.`);

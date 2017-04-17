@@ -52,6 +52,12 @@ module.exports = class FPUnBan extends Commando.Command {
 		const memberRole = guild.settings.get('memberRole');
 
 		for (const data of toUnBan) {
+			try {
+				await guild.unban(data.discordId);
+			} finally {
+				// Ignore
+			}
+
 			if (guild.members.has(data.discordId)) {
 				const member = guild.members.get(data.discordId);
 

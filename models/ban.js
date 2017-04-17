@@ -14,9 +14,16 @@ const Ban = new mongoose.Schema({
 	createdAt: { type: Date, required: true, default: Date.now }
 });
 
-//TODO: Sort by furthest end date
-Ban.statics.findActiveBans = function(user, guild) {
-	return this.find({ user: user.id, guild: guild.id, $where: 'this.duration === 0 || this.createdAt.getTime() + this.duration * 1000 > new Date().getTime()' });
+Ban.statics.findActiveBans = async function(user, guild) {
+	let bans = await this.find({ user: user.id, guild: guild.id, $where: 'this.duration === 0 || this.createdAt.getTime() + this.duration * 1000 > new Date().getTime()' });
+	return bans.sort((a, b) => {
+		const aTs = a.unbanTs();
+		const bTs = b.unbanTs();
+
+		if (aTs < bTs) return -1;
+		if (aTs > bTs) return 1;
+		return 0;
+	});
 };
 
 Ban.methods.formatReason = function() {
@@ -27,6 +34,11 @@ Ban.methods.formatReason = function() {
 
 	if (this.duration > 0) return message + `You will be unbanned on ${formattedDate} (${timeLeft}).`;
 	return message + 'This is a permanent ban.';
+};
+
+Ban.methods.unbanTs = function() {
+	if (this.duration === 0) return Infinity;
+	return this.createdAt.getTime() + this.duration * 1000;
 };
 
 module.exports = db.model('Ban', Ban);
