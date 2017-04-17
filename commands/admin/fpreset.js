@@ -19,12 +19,15 @@ module.exports = class FPReset extends Commando.Command {
 
 	async run(message) {
 		const user = message.member.user;
+		const promises = [];
 
 		await message.reply('Resseting roles and nicknames...');
 
 		for (const member of message.guild.members.values()) {
-			await util.resetDiscord(member);
+			promises.push(util.resetDiscord(member));
 		}
+
+		await Promise.all(promises);
 
 		await util.log(message.guild, `**RESET**: ${user.username}#${user.discriminator} (<@${user.id}>) used fpreset.`);
 		return message.reply('Done!');
