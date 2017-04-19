@@ -140,8 +140,8 @@ discordClient.on('error', logger.error);
 discordClient.on('warn', logger.warn);
 discordClient.on('debug', logger.debug);
 
-discordClient.on('disconnect', () => {
-	logger.warn('Disconnected!');
+discordClient.on('disconnect', (closeEvent) => {
+	logger.warn('Disconnected!', { closeEvent });
 });
 
 discordClient.on('reconnecting', () => {
@@ -153,6 +153,10 @@ discordClient.on('commandError', (cmd, err) => {
 	logger.error(`Error in command ${cmd.groupID}:${cmd.memberName}`, err);
 });
 
+discordClient.on('message', (message) => {
+	logger.debug(`${message.author.username}#${message.author.discriminator} (${message.author.id}) posted a message.`);
+});
+
 discordClient.login(config.get('discord.token'));
 
 let cleanupIntervalHandle = setInterval(util.getCleanupLoop(discordClient), config.get('cleanupInterval') * 1000);
@@ -160,8 +164,7 @@ let cleanupIntervalHandle = setInterval(util.getCleanupLoop(discordClient), conf
 // Treats unhandled errors in async code as regular errors.
 process.on('unhandledRejection', (err) => {
 	logger.debug('The following error was thrown from an unhandledRejection event.');
-	logger.error(err);
-	logger.debug(err);
+	logger.error(err, { error: err }); //We add the error in the metadata so that it is inspected.
 	process.exit(1);
 });
 

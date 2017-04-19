@@ -36,8 +36,10 @@ module.exports = class FPAuthCommand extends Commando.Command {
 		const facepunchId = args.facepunchId;
 		let user = await User.findOne({discordId: member.id});
 
-		if (!user)
+		if (!user) {
 			user = await util.handleNewUser(member.id, true);
+			return await util.sendWelcomeMessage(util.getGuildEntryRoom(message.guild), member.user, user.token);
+		}
 
 		if (user.facepunchId)
 			return message.reply('You have already authenticated your profile.');
