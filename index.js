@@ -10,6 +10,8 @@ const config = require('./lib/config');
 const util = require('./lib/util');
 const path = require('path');
 
+logger.info('Loading Facepunch Auth BOT v' + require('./package.json').version);
+
 let discordClient = new Commando.Client({
 	unknownCommandResponse: false,
 	fetchAllMembers: true,

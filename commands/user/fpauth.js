@@ -71,7 +71,7 @@ module.exports = class FPAuthCommand extends Commando.Command {
 			return message.reply(`Sorry, you need to have at least ${minPostCount} posts to authenticate. Come back when you meet this requirement.`);
 
 		await user.updateFromProfileData(profileData);
-		await message.reply('Congratulation, your account is now linked!');
+		await message.reply('Congratulations, your account is now linked!');
 		await util.updateDiscord(member, user);
 
 		//TODO: Update non-registrar guilds
