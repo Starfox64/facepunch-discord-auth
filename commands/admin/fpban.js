@@ -87,7 +87,12 @@ module.exports = class FPBan extends Commando.Command {
 					if (duration === 0) {
 						await util.kick(member, ban.formatReason(), true);
 					} else {
-						await member.sendMessage(ban.formatReason());
+						try {
+							await member.sendMessage(ban.formatReason());
+						} finally {
+							//Do Nothing
+						}
+
 						if (!member.roles.has(banRole)) await member.addRole(banRole);
 						if (member.roles.has(memberRole)) await member.removeRole(memberRole);
 					}
@@ -98,7 +103,8 @@ module.exports = class FPBan extends Commando.Command {
 						logger.error(e);
 					}
 
-					return await ban.remove();
+					await ban.remove();
+					return;
 				}
 
 				const durationText = ban.duration === 0 ? 'permanently' : ban.duration / 60 + ' minutes';
