@@ -89,7 +89,7 @@ module.exports = class FPBan extends Commando.Command {
 					} else {
 						try {
 							await member.sendMessage(ban.formatReason());
-						} finally {
+						} catch (e) {
 							//Do Nothing
 						}
 
@@ -98,6 +98,7 @@ module.exports = class FPBan extends Commando.Command {
 					}
 				} catch (e) {
 					if (e.status == 403) {
+						logger.debug(e);
 						await message.reply('Could not assign the banned role, permission denied.');
 					} else {
 						logger.error(e);
