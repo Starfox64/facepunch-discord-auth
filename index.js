@@ -142,14 +142,8 @@ discordClient.on('error', logger.error);
 discordClient.on('warn', logger.warn);
 discordClient.on('debug', logger.debug);
 
-discordClient.on('disconnect', async (closeEvent) => {
+discordClient.on('disconnect', (closeEvent) => {
 	logger.warn('Disconnected!', { closeEvent });
-
-	if ([1000, 1001, 1006].includes(closeEvent.code) && !closeEvent.wasClean) {
-		logger.warn('Manually reconnecting...');
-		await discordClient.destroy();
-		discordClient.login(config.get('discord.token'));
-	}
 });
 
 discordClient.on('reconnecting', () => {
