@@ -67,12 +67,12 @@ discordClient.on('ready', async () => {
 
 			if (!(await User.findOne({ discordId: member.id }))) {
 				if (!guild.settings.get('registrar', false)) {
-					//await util.sendRedirectMessage(entryRoom, member.user);
+					await util.sendRedirectMessage(entryRoom, member.user);
 					continue;
 				}
 
 				const user = await util.handleNewUser(member.id, true);
-				//await util.sendWelcomeMessage(entryRoom, member.user, user.token);
+				await util.sendWelcomeMessage(entryRoom, member.user, user.token);
 			}
 		}
 	}
@@ -112,7 +112,7 @@ discordClient.on('guildMemberAdd', async (member) => {
 		}
 
 		if (!user) user = await util.handleNewUser(member.id, true);
-		return await util.sendWelcomeMessage(util.getGuildEntryRoom(member.guild), member.user, user.token);
+		return await util.sendWelcomeMessage(entryRoom, member.user, user.token);
 	}
 
 	await util.updateDiscord(member, user);
