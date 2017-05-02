@@ -28,7 +28,7 @@ module.exports = class FPAuthCommand extends Commando.Command {
 	}
 
 	hasPermission(message) {
-		return message.guild.settings.get('enabled', false) && message.guild.settings.get('registrar', false);
+		return message.guild.settings.get('enabled', false);
 	}
 
 	async run(message, args) {
@@ -66,15 +66,17 @@ module.exports = class FPAuthCommand extends Commando.Command {
 		if (profileData.isBanned)
 			return message.reply('Your Facepunch account is currently banned, come back when it\'s not.');
 
-		let minPostCount = message.guild.settings.get('minPostCount', config.get('minPostCount'));
+		let minPostCount = message.client.provider.get('global', 'minPostCount', config.get('minPostCount'));
 		if (profileData.postCount < minPostCount)
 			return message.reply(`Sorry, you need to have at least ${minPostCount} posts to authenticate. Come back when you meet this requirement.`);
 
 		await user.updateFromProfileData(profileData);
 		await message.reply('Congratulations, your account is now linked!');
-		await util.updateDiscord(member, user);
 
-		//TODO: Update non-registrar guilds
+		for (const guild of message.client.guilds.values()) {
+			if (!guild.members.has(member.id)) continue;
+			await util.updateDiscord(guild.members.get(member.id), user);
+		}
 
 		await util.log(message.guild, `**AUTH**: ${member.user.username}#${member.user.discriminator} (<@${member.id}>) linked his FP Account ID: ${facepunchId} USERNAME: ${profileData.username}.`);
 	}

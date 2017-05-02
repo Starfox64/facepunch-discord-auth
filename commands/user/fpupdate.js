@@ -17,7 +17,7 @@ module.exports = class FPUpdate extends Commando.Command {
 	}
 
 	hasPermission(message) {
-		return message.guild.settings.get('enabled', false) && message.guild.settings.get('registrar', false);
+		return message.guild.settings.get('enabled', false);
 	}
 
 	async run(message) {
@@ -41,9 +41,11 @@ module.exports = class FPUpdate extends Commando.Command {
 		logger.debug(profileData);
 
 		await user.updateFromProfileData(profileData);
-		await util.updateDiscord(member, user);
 
-		//TODO: Update non-registrar guilds
+		for (const guild of message.client.guilds.values()) {
+			if (!guild.members.has(member.id)) continue;
+			await util.updateDiscord(guild.members.get(member.id), user);
+		}
 
 		return message.reply('Your profile information has been updated!');
 	}

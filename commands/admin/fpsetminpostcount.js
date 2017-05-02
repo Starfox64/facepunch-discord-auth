@@ -24,11 +24,11 @@ module.exports = class FPSetMinPostCount extends Commando.Command {
 	}
 
 	hasPermission(message) {
-		return util.isInModeratorChannel(message) && message.guild.settings.get('registrar', false);
+		return util.isInModeratorChannel(message) && message.guild.settings.get('master', false);
 	}
 
 	async run(message, args) {
-		await message.guild.settings.set('minPostCount', args.minPostCount);
+		await message.client.provider.set('global', 'minPostCount', args.minPostCount);
 		return message.reply(`The minimum post count was set to **${args.minPostCount}**.`);
 	}
 };

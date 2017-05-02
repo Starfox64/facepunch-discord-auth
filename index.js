@@ -66,11 +66,6 @@ discordClient.on('ready', async () => {
 			}
 
 			if (!(await User.findOne({ discordId: member.id }))) {
-				if (!guild.settings.get('registrar', false)) {
-					await util.sendRedirectMessage(entryRoom, member.user);
-					continue;
-				}
-
 				const user = await util.handleNewUser(member.id, true);
 				await util.sendWelcomeMessage(entryRoom, member.user, user.token);
 			}
@@ -93,8 +88,8 @@ discordClient.on('guildMemberAdd', async (member) => {
 			try {
 				await member.addRole(banRole);
 			} catch (e) {
-				if (e.status == 403) {
-					logger.warn(`Could not add the ban role to ${member.user.username}#${member.user.discriminator} (${member.id}), permission denied.`);
+				if (e.name === 'DiscordAPIError') {
+					logger.warn(`Could not update ${member.user.username}#${member.user.discriminator} (${member.id})'s roles, ${e.message}.`);
 				} else {
 					logger.error(e);
 				}
@@ -106,13 +101,13 @@ discordClient.on('guildMemberAdd', async (member) => {
 	if (!user || !user.facepunchId) {
 		const entryRoom = util.getGuildEntryRoom(member.guild);
 
-		if (!member.guild.settings.get('registrar', false)) {
-			await util.sendRedirectMessage(entryRoom, member.user);
-			return;
-		}
-
 		if (!user) user = await util.handleNewUser(member.id, true);
-		return await util.sendWelcomeMessage(entryRoom, member.user, user.token);
+
+		setTimeout(async () => {
+			await util.sendWelcomeMessage(entryRoom, member.user, user.token);
+		}, 2000);
+
+		return;
 	}
 
 	await util.updateDiscord(member, user);
@@ -155,10 +150,6 @@ discordClient.on('commandError', (cmd, err) => {
 	logger.error(`Error in command ${cmd.groupID}:${cmd.memberName}`, err);
 });
 
-discordClient.on('message', (message) => {
-	logger.debug(`${message.author.username}#${message.author.discriminator} (${message.author.id}) posted a message.`);
-});
-
 discordClient.login(config.get('discord.token'));
 
 let cleanupIntervalHandle = setInterval(util.getCleanupLoop(discordClient), config.get('cleanupInterval') * 1000);
@@ -166,6 +157,11 @@ let cleanupIntervalHandle = setInterval(util.getCleanupLoop(discordClient), conf
 // Treats unhandled errors in async code as regular errors.
 process.on('unhandledRejection', (err) => {
 	logger.debug('The following error was thrown from an unhandledRejection event.');
+
+	if (err.name === 'DiscordAPIError') {
+		return logger.warn(err.message);
+	}
+
 	logger.error(err, { error: err }); //We add the error in the metadata so that it is inspected.
 	process.exit(1);
 });
