@@ -5,8 +5,7 @@
   "description": "A bot to link Facepunch accounts with Discord accounts.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "docker-push": "docker build --tag starfox64/facepunch-discord-auth . && docker push"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",

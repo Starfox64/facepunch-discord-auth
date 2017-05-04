@@ -2,3 +2,4 @@
 .gitignore
 .eslintrc*
 docker-compose*
+docker_build.sh
