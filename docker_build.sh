@@ -13,4 +13,4 @@ fi
 
 echo "Building Facepunch Auth Bot v${VERSION}"
 
-docker build -t starfox64/facepunch-discord-auth:latest -t starfox64/facepunch-discord-auth:${VERSION} . && docker push starfox64/facepunch-discord-auth:${VERSION} && starfox64/facepunch-discord-auth:latest
+docker build -t starfox64/facepunch-discord-auth:latest -t starfox64/facepunch-discord-auth:${VERSION} . && docker push starfox64/facepunch-discord-auth:${VERSION} && docker push starfox64/facepunch-discord-auth:latest
