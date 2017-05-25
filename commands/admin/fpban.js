@@ -80,7 +80,7 @@ module.exports = class FPBan extends Commando.Command {
 				duration
 			});
 
-			for (let otherGuild of message.client.guilds) {
+			for (const otherGuild of message.client.guilds.values()) {
 				if (otherGuild.id !== guild.id && (!guild.settings.get('master', false) || otherGuild.settings.get('banSubscriptionMode', 0) < 2)) continue;
 				if (guild.members.has(id)) {
 					const member = otherGuild.members.get(id);
