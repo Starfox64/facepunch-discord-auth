@@ -3,6 +3,7 @@
 const mongoose = require('mongoose');
 const moment = require('moment-timezone');
 const constants = require('../lib/constants');
+const util = require('../lib/util');
 const db = require('../lib/db');
 
 const Ban = new mongoose.Schema({
@@ -11,11 +12,29 @@ const Ban = new mongoose.Schema({
 	guild: { type: String, index: true, required: true },
 	reason: { type: String, required: true, default: 'N/A' },
 	duration: { type: Number, required: true },
+	global: { type: Boolean, required: true, default: false },
 	createdAt: { type: Date, required: true, default: Date.now }
 });
 
-Ban.statics.findActiveBans = async function(user, guild) {
-	let bans = await this.find({ user: user.id, guild: guild.id, $where: 'this.duration === 0 || this.createdAt.getTime() + this.duration * 1000 > new Date().getTime()' });
+Ban.statics.findActiveBans = async function (user, guild) {
+	let guilds = [guild.id];
+
+	if (guild.settings.get('banSubscriptionMode', 0) == 2)
+		guilds = guilds.concat(util.propertyArray(util.getMasterGuilds(guild.client), 'id'));
+
+	let or = [{ guild: { $in: guilds } }];
+
+	if (guild.settings.get('banSubscriptionMode', 0) > 1)
+		or.push({ global: true });
+
+	let bans = await this.find({
+		$and: [
+			{ user: user.id },
+			{ $or: or }
+		],
+		$where: 'this.duration === 0 || this.createdAt.getTime() + this.duration * 1000 > new Date().getTime()'
+	});
+
 	return bans.sort((a, b) => {
 		const aTs = a.unbanTs();
 		const bTs = b.unbanTs();

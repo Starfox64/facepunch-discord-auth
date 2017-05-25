@@ -80,36 +80,38 @@ module.exports = class FPBan extends Commando.Command {
 				duration
 			});
 
-			if (guild.members.has(id)) {
-				const member = guild.members.get(id);
+			for (let otherGuild of message.client.guilds) {
+				if (otherGuild.id !== guild.id && (!guild.settings('master', false) || otherGuild.settings.get('banSubscriptionMode', 0) < 2)) continue;
+				if (guild.members.has(id)) {
+					const member = otherGuild.members.get(id);
 
-				try {
-					if (duration === 0) {
-						await util.kick(member, ban.formatReason(), true);
-					} else {
-						try {
-							await member.sendMessage(ban.formatReason());
-						} catch (e) {
-							//Do Nothing
+					try {
+						if (duration === 0) {
+							await util.kick(member, ban.formatReason(), true);
+						} else {
+							try {
+								await member.sendMessage(ban.formatReason());
+							} catch (e) {
+								//Do Nothing
+							}
+
+							if (!member.roles.has(banRole)) await member.addRole(banRole);
+							if (member.roles.has(memberRole)) await member.removeRole(memberRole);
+						}
+					} catch (e) {
+						if (e.status == 403) {
+							logger.debug(e);
+							await message.reply('Could not assign the banned role, permission denied.');
+						} else {
+							logger.error(e);
 						}
 
-						if (!member.roles.has(banRole)) await member.addRole(banRole);
-						if (member.roles.has(memberRole)) await member.removeRole(memberRole);
-					}
-				} catch (e) {
-					if (e.status == 403) {
-						logger.debug(e);
-						await message.reply('Could not assign the banned role, permission denied.');
-					} else {
-						logger.error(e);
+						return;
 					}
 
-					await ban.remove();
-					return;
+					const durationText = ban.duration === 0 ? 'permanently' : ban.duration / 60 + ' minutes';
+					await util.log(otherGuild, `**BAN**: ${member.user.username}#${member.user.discriminator} (<@${member.id}>) was banned by ${moderator.user.username}#${moderator.user.discriminator} (<@${moderator.id}>) ${durationText} for "${reason}".`);
 				}
-
-				const durationText = ban.duration === 0 ? 'permanently' : ban.duration / 60 + ' minutes';
-				await util.log(guild, `**BAN**: ${member.user.username}#${member.user.discriminator} (<@${member.id}>) was banned by ${moderator.user.username}#${moderator.user.discriminator} (<@${moderator.id}>) ${durationText} for "${reason}".`);
 			}
 		}
 
