@@ -54,9 +54,6 @@ module.exports = class FPBan extends Commando.Command {
 		const userData = await User.findOne({ discordId: user.id });
 		const toBan = [user.id];
 
-		const banRole = guild.settings.get('banRole');
-		const memberRole = guild.settings.get('memberRole');
-
 		if (message.channel.members.has(user.id) && !this.client.isOwner(message.member.user))
 			return message.reply('You cannot ban a member of the moderator channel.');
 
@@ -95,8 +92,11 @@ module.exports = class FPBan extends Commando.Command {
 								//Do Nothing
 							}
 
-							if (!member.roles.has(banRole)) await member.addRole(banRole);
-							if (member.roles.has(memberRole)) await member.removeRole(memberRole);
+							const banRole = otherGuild.settings.get('banRole');
+							const memberRole = otherGuild.settings.get('memberRole');
+
+							if (banRole && !member.roles.has(banRole)) await member.addRole(banRole);
+							if (memberRole && member.roles.has(memberRole)) await member.removeRole(memberRole);
 						}
 					} catch (e) {
 						if (e.status == 403) {
