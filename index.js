@@ -1,6 +1,7 @@
 'use strict';
 
 const Commando = require('discord.js-commando');
+const raven = require('raven');
 const MongooseProvider = require('./lib/mongoose-provider');
 const Guild = require('./models/guild');
 const Ban = require('./models/ban');
@@ -148,6 +149,7 @@ discordClient.on('reconnecting', () => {
 discordClient.on('commandError', (cmd, err) => {
 	if (err instanceof Commando.FriendlyError) return;
 	logger.error(`Error in command ${cmd.groupID}:${cmd.memberName}`, err);
+	raven.captureException(err);
 });
 
 discordClient.login(config.get('discord.token'));
@@ -156,14 +158,12 @@ let cleanupIntervalHandle = setInterval(util.getCleanupLoop(discordClient), conf
 
 // Treats unhandled errors in async code as regular errors.
 process.on('unhandledRejection', (err) => {
-	logger.debug('The following error was thrown from an unhandledRejection event.');
-
 	if (err.name === 'DiscordAPIError') {
+		raven.captureException(err);
 		return logger.warn(err.message);
 	}
 
-	logger.error(err, { error: err }); //We add the error in the metadata so that it is inspected.
-	process.exit(1);
+	throw err;
 });
 
 process.on('SIGTERM', async () => {

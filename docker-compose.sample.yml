@@ -17,3 +17,4 @@ node:
     - FPAUTH_MAX_IDLE_TIME=0
     - FPAUTH_CLEANUP_INTERVAL=600
     - FPAUTH_MONGO_URL=mongodb://mongo:27017/fpauth
+    - FPAUTH_RAVEN=
