@@ -1,6 +1,6 @@
 {
   "name": "facepunch-discord-auth",
-  "version": "2.3.5",
+  "version": "2.3.6",
   "private": true,
   "description": "A bot to link Facepunch accounts with Discord accounts.",
   "main": "index.js",

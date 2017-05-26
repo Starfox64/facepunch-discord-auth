@@ -52,7 +52,7 @@ discordClient.on('ready', async () => {
 						if (ban.duration === 0) {
 							await util.kick(member, ban.formatReason(), true);
 						} else {
-							await member.sendMessage(ban.formatReason());
+							await member.send(ban.formatReason());
 							if (!member.roles.has(banRole)) await member.addRole(banRole);
 							if (member.roles.has(memberRole)) await member.removeRole(memberRole);
 						}

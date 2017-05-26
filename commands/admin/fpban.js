@@ -79,7 +79,7 @@ module.exports = class FPBan extends Commando.Command {
 
 			for (const otherGuild of message.client.guilds.values()) {
 				if (otherGuild.id !== guild.id && (!guild.settings.get('master', false) || otherGuild.settings.get('banSubscriptionMode', 0) < 2)) continue;
-				if (guild.members.has(id)) {
+				if (otherGuild.members.has(id)) {
 					const member = otherGuild.members.get(id);
 
 					try {
@@ -87,7 +87,7 @@ module.exports = class FPBan extends Commando.Command {
 							await util.kick(member, ban.formatReason(), true);
 						} else {
 							try {
-								await member.sendMessage(ban.formatReason());
+								await member.send(ban.formatReason());
 							} catch (e) {
 								//Do Nothing
 							}
