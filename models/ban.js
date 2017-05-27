@@ -27,7 +27,7 @@ Ban.statics.findActiveBans = async function (user, guild) {
 
 	let or = [{ guild: { $in: guilds } }];
 
-	if (guild.settings.get('banSubscriptionMode', 0) > 1)
+	if (guild.settings.get('banSubscriptionMode', 0) > 0 || guild.settings.get('master', false))
 		or.push({ global: true });
 
 	logger.debug(or);
@@ -35,7 +35,12 @@ Ban.statics.findActiveBans = async function (user, guild) {
 	let bans = await this.find({
 		$and: [
 			{ user: user.id },
-			{ $or: or }
+			{
+				$or: [
+					{ guild: { $in: guilds } },
+					{ global: true }
+				]
+			} //TODO: REVERT
 		],
 		$where: 'this.duration === 0 || this.createdAt.getTime() + this.duration * 1000 > new Date().getTime()'
 	});
