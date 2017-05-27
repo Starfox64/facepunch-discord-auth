@@ -17,33 +17,26 @@ const Ban = new mongoose.Schema({
 	createdAt: { type: Date, required: true, default: Date.now }
 });
 
-Ban.statics.findActiveBans = async function (user, guild) {
+Ban.statics.findActiveBans = async function (user, guild, noSort = false) {
 	let guilds = [guild.id];
-	logger.debug(guilds);
 
 	if (guild.settings.get('banSubscriptionMode', 0) == 2)
 		guilds = guilds.concat(util.propertyArray(util.getMasterGuilds(guild.client), 'id'));
-	logger.debug(guilds);
 
 	let or = [{ guild: { $in: guilds } }];
 
 	if (guild.settings.get('banSubscriptionMode', 0) > 0 || guild.settings.get('master', false))
 		or.push({ global: true });
 
-	logger.debug(or);
-
 	let bans = await this.find({
 		$and: [
 			{ user: user.id },
-			{
-				$or: [
-					{ guild: { $in: guilds } },
-					{ global: true }
-				]
-			} //TODO: REVERT
+			{ $or: or }
 		],
 		$where: 'this.duration === 0 || this.createdAt.getTime() + this.duration * 1000 > new Date().getTime()'
 	});
+
+	if (noSort) return bans;
 
 	return bans.sort((a, b) => {
 		const aTs = a.unbanTs();
