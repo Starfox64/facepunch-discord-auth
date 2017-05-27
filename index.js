@@ -168,7 +168,14 @@ process.on('unhandledRejection', (err) => {
 
 process.on('SIGTERM', async () => {
 	clearInterval(cleanupIntervalHandle);
+
 	logger.debug('Destroying discord client...');
 	await discordClient.destroy();
 	logger.debug('Discord client destroyed.');
+
+	logger.debug('Closing mongoose connection...');
+	module.exports.close(() => {
+		logger.debug('Mongoose connection closed.');
+		process.exit(0);
+	});
 });
