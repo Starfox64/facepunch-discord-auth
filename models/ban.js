@@ -5,6 +5,7 @@ const moment = require('moment-timezone');
 const constants = require('../lib/constants');
 const util = require('../lib/util');
 const db = require('../lib/db');
+const logger = require('../lib/logger');
 
 const Ban = new mongoose.Schema({
 	user: { type: String, index: true, required: true },
@@ -18,14 +19,18 @@ const Ban = new mongoose.Schema({
 
 Ban.statics.findActiveBans = async function (user, guild) {
 	let guilds = [guild.id];
+	logger.debug(guilds);
 
 	if (guild.settings.get('banSubscriptionMode', 0) == 2)
 		guilds = guilds.concat(util.propertyArray(util.getMasterGuilds(guild.client), 'id'));
+	logger.debug(guilds);
 
 	let or = [{ guild: { $in: guilds } }];
 
 	if (guild.settings.get('banSubscriptionMode', 0) > 1)
 		or.push({ global: true });
+
+	logger.debug(or);
 
 	let bans = await this.find({
 		$and: [
