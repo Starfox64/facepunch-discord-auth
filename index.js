@@ -174,7 +174,7 @@ process.on('SIGTERM', async () => {
 	logger.debug('Discord client destroyed.');
 
 	logger.debug('Closing mongoose connection...');
-	module.exports.close(() => {
+	require('./lib/db').close(() => {
 		logger.debug('Mongoose connection closed.');
 		process.exit(0);
 	});
