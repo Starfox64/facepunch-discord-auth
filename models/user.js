@@ -6,7 +6,7 @@ const util = require('../lib/util');
 const db = require('../lib/db');
 
 const User = new mongoose.Schema({
-	facepunchId: { type: Number, index: true, unique: true, sparse: true },
+	facepunchId: { type: Number, index: true, sparse: true },
 	discordId: { type: String, index: true, unique: true, required: true },
 	isGoldMember: { type: Boolean },
 	isModerator: { type: Boolean },
