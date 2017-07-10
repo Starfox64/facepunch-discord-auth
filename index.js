@@ -132,7 +132,20 @@ discordClient.on('guildMemberUpdate', async (oldMember, newMember) => {
 
 discordClient.on('messageUpdate', async (oldMessage, newMessage) => {
 	if (!oldMessage.member || oldMessage.author.bot) return;
-	await util.log(oldMessage.member.guild, `**MSGEDIT**: ${oldMessage.author.username}#${oldMessage.author.discriminator} (<@${oldMessage.author.id}>) edited a message:\n${oldMessage.content}\n\n\n${newMessage.content}`);
+
+	let editLogChannel = oldMessage.guild.channels.get(oldMessage.guild.settings.get('editLogChannel'));
+	if (!editLogChannel) return;
+
+	await editLogChannel.send(`**MSGEDIT**: ${oldMessage.author.username}#${oldMessage.author.discriminator} (<@${oldMessage.author.id}>) edited their message:\n${oldMessage.content}\n\n\n${newMessage.content}`);
+});
+
+discordClient.on('messageDelete', async (message) => {
+	if (!message.member || message.author.bot) return;
+
+	let editLogChannel = message.guild.channels.get(message.guild.settings.get('editLogChannel'));
+	if (!editLogChannel) return;
+
+	await editLogChannel.send(`**MSGDELETE**: ${message.author.username}#${message.author.discriminator} (<@${message.author.id}>) deleted their message:\n${message.content}`);
 });
 
 discordClient.on('guildCreate', async (guild) => {
