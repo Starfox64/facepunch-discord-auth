@@ -14,7 +14,7 @@ module.exports = class FPSetMinPostCount extends Commando.Command {
 				{
 					key: 'minPostCount',
 					label: 'Minimum posts',
-					prompt: 'Do you want to update nicknames?',
+					prompt: 'What is the minimum post count?',
 					type: 'integer',
 					min: -1,
 					wait: 30

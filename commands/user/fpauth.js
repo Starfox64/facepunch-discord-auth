@@ -1,5 +1,6 @@
 const Commando = require('discord.js-commando');
 const escapeMarkdown = require('discord.js').escapeMarkdown;
+const moment = require('moment-timezone');
 const logger = require('../../lib/logger');
 const User = require('../../models/user');
 const config = require('../../lib/config');
@@ -67,7 +68,9 @@ module.exports = class FPAuthCommand extends Commando.Command {
 			return message.reply('Your Facepunch account is currently banned, come back when it\'s not.');
 
 		let minPostCount = message.client.provider.get('global', 'minPostCount', config.get('minPostCount'));
-		if (profileData.postCount < minPostCount)
+		let minAge = message.client.provider.get('global', 'minAge', config.get('minAge'));
+
+		if (profileData.postCount < minPostCount && !moment().isAfter(profileData.joinDate.add(minAge, 'seconds'), 'day'))
 			return message.reply(`Sorry, you need to have at least ${minPostCount} posts to authenticate. Come back when you meet this requirement.`);
 
 		await user.updateFromProfileData(profileData);
