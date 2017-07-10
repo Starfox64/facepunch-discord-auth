@@ -130,6 +130,11 @@ discordClient.on('guildMemberUpdate', async (oldMember, newMember) => {
 	}
 });
 
+discordClient.on('messageUpdate', async (oldMessage, newMessage) => {
+	if (!oldMessage.member || oldMessage.author.bot) return;
+	await util.log(oldMessage.member.guild, `**MSGEDIT**: ${oldMessage.author.username}#${oldMessage.author.discriminator} (<@${oldMessage.author.id}>) edited a message:\n${oldMessage.content}\n\n\n${newMessage.content}`);
+});
+
 discordClient.on('guildCreate', async (guild) => {
 	logger.info(`Guild ${guild.name} (${guild.id}) added.`);
 });
