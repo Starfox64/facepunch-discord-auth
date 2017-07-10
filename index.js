@@ -106,7 +106,7 @@ discordClient.on('guildMemberAdd', async (member) => {
 
 		setTimeout(async () => {
 			await util.sendWelcomeMessage(entryRoom, member.user, user.token);
-		}, 5000);
+		}, 10000);
 
 		return;
 	}
