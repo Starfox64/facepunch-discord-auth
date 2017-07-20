@@ -134,9 +134,9 @@ discordClient.on('messageUpdate', async (oldMessage, newMessage) => {
 	if (!oldMessage.member || oldMessage.author.bot) return;
 
 	let editLogChannel = oldMessage.guild.channels.get(oldMessage.guild.settings.get('editLogChannel'));
-	if (!editLogChannel) return;
+	if (!editLogChannel || oldMessage.content === newMessage.content) return;
 
-	await editLogChannel.send(`**MSGEDIT**: ${oldMessage.author.username}#${oldMessage.author.discriminator} (<@${oldMessage.author.id}>) edited their message:\n${oldMessage.content}\n\n\n${newMessage.content}`);
+	await editLogChannel.send(`**MSGEDIT**: ${oldMessage.author.username}#${oldMessage.author.discriminator} (<@${oldMessage.author.id}>) edited their message:\n${oldMessage.content}\n\n\n***TO:***\n\n\n${newMessage.content}`);
 });
 
 discordClient.on('messageDelete', async (message) => {
