@@ -5,7 +5,6 @@ const moment = require('moment-timezone');
 const constants = require('../lib/constants');
 const util = require('../lib/util');
 const db = require('../lib/db');
-const logger = require('../lib/logger');
 
 const Ban = new mongoose.Schema({
 	user: { type: String, index: true, required: true },
@@ -17,7 +16,7 @@ const Ban = new mongoose.Schema({
 	createdAt: { type: Date, required: true, default: Date.now }
 });
 
-Ban.statics.findActiveBans = async function (user, guild, noSort = false) {
+Ban.statics.findActiveBans = async function (user, guild) {
 	let guilds = [guild.id];
 
 	if (guild.settings.get('banSubscriptionMode', 0) == 2)
@@ -34,18 +33,9 @@ Ban.statics.findActiveBans = async function (user, guild, noSort = false) {
 			{ $or: or }
 		],
 		$where: 'this.duration === 0 || this.createdAt.getTime() + this.duration * 1000 > new Date().getTime()'
-	});
+	}).sort({createdAt: -1}).exec();
 
-	if (noSort) return bans;
-
-	return bans.sort((a, b) => {
-		const aTs = a.unbanTs();
-		const bTs = b.unbanTs();
-
-		if (aTs < bTs) return -1;
-		if (aTs > bTs) return 1;
-		return 0;
-	});
+	return bans;
 };
 
 Ban.methods.formatReason = function() {
