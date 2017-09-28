@@ -23,7 +23,8 @@ module.exports = class FPSetBanSubscription extends Commando.Command {
 	}
 
 	hasPermission(message) {
-		return util.isInModeratorChannel(message) && !message.guild.settings.get('master', false);
+		//return util.isInModeratorChannel(message) && !message.guild.settings.get('master', false);
+		return false;
 	}
 
 	async run(message, args) {
