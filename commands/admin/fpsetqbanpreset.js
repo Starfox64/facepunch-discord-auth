@@ -4,13 +4,13 @@ const util = require('../../lib/util');
 module.exports = class FPQBanPreset extends Commando.Command {
 	constructor(client) {
 		super(client, {
-			name: 'fbqbanpreset',
+			name: 'fpqbanpreset',
 			group: 'admin',
-			memberName: 'fbqbanpreset',
+			memberName: 'fpqbanpreset',
 			description: 'Creates a quick ban preset. Remove the duration & reason to delete the preset.',
 			examples: [
-				'fbqbanpreset rust 1d "Asking about rust"',
-				'fbqbanpreset rust'
+				'fpqbanpreset rust 1d "Asking about rust"',
+				'fpqbanpreset rust'
 			],
 			guildOnly: true,
 			args: [
